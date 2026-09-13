@@ -34,12 +34,12 @@ jobs:
         run: pnpm install --no-frozen-lockfile
 
       - name: Build project
-        run: cd mai-anh-homepage && pnpm run build
+        run: pnpm run build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "./mai-anh-homepage/dist"
+          path: "./dist"
 
       - name: Deploy to GitHub Pages
         id: deployment
