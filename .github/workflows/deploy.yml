@@ -1,4 +1,4 @@
-name: Deploy Vite Project to GitHub Pages
+name: Deploy Vite PNPM Project to GitHub Pages
 
 on:
   push:
@@ -19,18 +19,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'pnpm'
 
       - name: Install dependencies
-        working-directory: mai-anh-homepage
-        run: npm install
+        run: pnpm install --no-frozen-lockfile
 
       - name: Build project
-        working-directory: mai-anh-homepage
-        run: npm run build
+        run: pnpm run build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
