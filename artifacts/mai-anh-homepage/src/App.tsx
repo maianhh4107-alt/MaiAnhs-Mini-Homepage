@@ -151,18 +151,18 @@ function MoodNoteWindow({ initialNote, onClose, onSave }: { initialNote: MoodNot
   const [text, setText] = useState(initialNote?.text ?? '');
   return (
     <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-      <div className="modal-window max-w-lg">
+      <div className="modal-window max-w-lg" data-testid="mood-note-window">
         <WindowBar title="TODAY'S MOOD — new note" onClose={onClose} />
         <form className="p-5" onSubmit={(event) => { event.preventDefault(); if (text.trim()) { onSave(text.trim()); onClose(); } }}>
           <p className="micro text-[#df3b70]">PERSONAL DESK NOTE</p>
           <h2 className="section-title mt-1">READY TO CREATE</h2>
           <p className="mt-3 text-sm leading-6 text-[#70445b]">Write a little note for today. It stays on this homepage in your browser.</p>
           <label className="micro mt-5 block">YOUR NOTE
-            <textarea autoFocus className="input-retro mt-2 min-h-32 resize-y" value={text} onChange={(event) => setText(event.target.value)} maxLength={280} placeholder="today I want to remember..." />
+            <textarea autoFocus className="input-retro mt-2 min-h-32 resize-y" value={text} onChange={(event) => setText(event.target.value)} maxLength={280} placeholder="today I want to remember..." data-testid="input-mood-note" />
           </label>
           <div className="mt-4 flex flex-wrap gap-3">
-            <button className="glossy-button" type="submit">PIN NOTE</button>
-            <button className="nav-chip" type="button" onClick={onClose}>CANCEL</button>
+            <button className="glossy-button" type="submit" data-testid="button-save-mood-note">PIN NOTE</button>
+            <button className="nav-chip" type="button" onClick={onClose} data-testid="button-cancel-mood-note">CANCEL</button>
           </div>
         </form>
       </div>
@@ -181,7 +181,7 @@ function MiniCalendar({ summary, isLoading, hasError }: { summary?: CalendarSumm
   const monthLabel = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric', timeZone: summary?.timeZone }).format(new Date(Date.UTC(year, month - 1, 1)));
   const cells = Array.from({ length: firstWeekday + daysInMonth }, (_, index) => index < firstWeekday ? null : index - firstWeekday + 1);
   return (
-    <div className="paper-card p-3">
+    <div className="paper-card p-3" data-testid="mini-calendar">
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="micro">MINI CALENDAR</div>
         <span className={`font-mono text-[9px] ${hasError ? 'text-[#d94170]' : 'text-[#5e8a42]'}`}>{hasError ? 'OFFLINE' : isLoading ? 'SYNCING...' : 'LIVE'}</span>
@@ -192,7 +192,7 @@ function MiniCalendar({ summary, isLoading, hasError }: { summary?: CalendarSumm
         {cells.map((day, index) => {
           const dateKey = day ? `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}` : '';
           const hasEvent = dateKey ? eventDays.has(dateKey) : false;
-          return <span key={`${dateKey || 'empty'}-${index}`} className={`${day === today ? 'bg-[#ef4e77] text-white' : ''} ${hasEvent ? 'underline decoration-2 decoration-[#6b4ab5] underline-offset-2' : ''}`}>{day ?? ''}</span>;
+          return <span key={`${dateKey || 'empty'}-${index}`} data-testid={dateKey ? `calendar-day-${dateKey}` : undefined} data-today={day === today ? 'true' : undefined} data-event-day={hasEvent ? 'true' : undefined} className={`${day === today ? 'bg-[#ef4e77] text-white' : ''} ${hasEvent ? 'underline decoration-2 decoration-[#6b4ab5] underline-offset-2' : ''}`}>{day ?? ''}</span>;
         })}
       </div>
       <p className="mt-3 border-t border-dotted border-[#d894a8] pt-2 font-mono text-[9px] text-[#70445b]">
