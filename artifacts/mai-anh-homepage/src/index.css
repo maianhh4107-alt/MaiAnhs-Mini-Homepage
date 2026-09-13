@@ -53,6 +53,8 @@
   --app-font-sans: 'Noto Sans', 'Noto Sans Display', sans-serif;
   --app-font-mono: 'Space Mono', monospace;
   --radius: 10px;
+  --cursor-default: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M4 2l3 24 7-7 6 10 4-2-6-10 10-1z' fill='%23ff7fa8' stroke='%23572b4d' stroke-width='2' stroke-linejoin='round'/%3E%3Ccircle cx='24' cy='6' r='3' fill='%23ffe96a' stroke='%23572b4d' stroke-width='1.5'/%3E%3C/svg%3E") 3 2, auto;
+  --cursor-pointer: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M5 4l18 12-9 2-4 10z' fill='%23ff5f94' stroke='%23572b4d' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M25 2v4m-2-2h4M27 11v3m-1.5-1.5h3' stroke='%23ffe96a' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") 5 4, pointer;
 }
 
 .dark {
@@ -87,7 +89,9 @@
     font-family: var(--app-font-sans);
   }
   button, input, textarea { font: inherit; }
-  button { cursor: pointer; }
+  *, body { cursor: var(--cursor-default); }
+  a, button, summary, [role="button"], select, input[type="checkbox"], input[type="radio"] { cursor: var(--cursor-pointer); }
+  input[type="text"], input[type="email"], input[type="url"], textarea { cursor: text; }
 }
 
 /* A wallpaper that feels printed, tiled, and a little too decorated. */
@@ -259,6 +263,9 @@
   .poster { right:4%; transform:scale(.8) rotate(5deg); transform-origin:top right; }
   .shelf { left:3%; transform:scale(.8); transform-origin:bottom left; }
   .photo-mini { left:7%; transform:scale(.78) rotate(-7deg); transform-origin:top left; }
+}
+@media (hover: none), (pointer: coarse) {
+  *, body, a, button, summary, [role="button"], select, input, textarea { cursor: auto; }
 }
 @media (max-width: 520px) {
   .intro-body { min-height:500px; padding-inline:14px; }
