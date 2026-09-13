@@ -34,6 +34,7 @@ jobs:
         run: pnpm install --no-frozen-lockfile
 
       - name: Build project
+        working-directory: mai-anh-homepage
         run: pnpm run build
 
       - name: Upload artifact
