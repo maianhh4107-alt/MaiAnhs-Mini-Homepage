@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ExternalLink, Heart, Music2, Play, Sparkles, X } from 'lucide-react';
+import type { CalendarSummary } from '@workspace/api-client-react';
 import profilePhoto from '@assets/Profile_Photo_1789185793051.jpg';
 import bgmAudio from '@assets/Supernatural_(Instrumental)_1789186548920.mp3';
 
 type SectionId = 'home' | 'profile' | 'work' | 'stage' | 'achievements' | 'diary' | 'guestbook' | 'contact';
 type Performance = { id: string; title: string; year: string; detail: string; url: string; color: string };
 type Guest = { id: string; nickname: string; message: string; hearts: number; demo?: boolean };
+type MoodNote = { text: string; savedAt: string };
 
 const performanceLinks: Performance[] = [
   {
@@ -145,7 +147,62 @@ function MiniRoom({ onOpen }: { onOpen: (id: SectionId) => void }) {
   );
 }
 
-function HeroHome({ onOpen }: { onOpen: (id: SectionId) => void }) {
+function MoodNoteWindow({ initialNote, onClose, onSave }: { initialNote: MoodNote | null; onClose: () => void; onSave: (text: string) => void }) {
+  const [text, setText] = useState(initialNote?.text ?? '');
+  return (
+    <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+      <div className="modal-window max-w-lg">
+        <WindowBar title="TODAY'S MOOD — new note" onClose={onClose} />
+        <form className="p-5" onSubmit={(event) => { event.preventDefault(); if (text.trim()) { onSave(text.trim()); onClose(); } }}>
+          <p className="micro text-[#df3b70]">PERSONAL DESK NOTE</p>
+          <h2 className="section-title mt-1">READY TO CREATE</h2>
+          <p className="mt-3 text-sm leading-6 text-[#70445b]">Write a little note for today. It stays on this homepage in your browser.</p>
+          <label className="micro mt-5 block">YOUR NOTE
+            <textarea autoFocus className="input-retro mt-2 min-h-32 resize-y" value={text} onChange={(event) => setText(event.target.value)} maxLength={280} placeholder="today I want to remember..." />
+          </label>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <button className="glossy-button" type="submit">PIN NOTE</button>
+            <button className="nav-chip" type="button" onClick={onClose}>CANCEL</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function MiniCalendar({ summary, isLoading, hasError }: { summary?: CalendarSummary; isLoading: boolean; hasError: boolean }) {
+  const now = new Date();
+  const fallbackParts = { year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate() };
+  const [year, month] = (summary?.month ?? `${fallbackParts.year}-${String(fallbackParts.month).padStart(2, '0')}`).split('-').map(Number);
+  const today = summary ? Number(summary.currentDate.slice(-2)) : fallbackParts.day;
+  const firstWeekday = new Date(Date.UTC(year, month - 1, 1)).getUTCDay();
+  const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const eventDays = new Set((summary?.events ?? []).map((event) => event.start.slice(0, 10)));
+  const monthLabel = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric', timeZone: summary?.timeZone }).format(new Date(Date.UTC(year, month - 1, 1)));
+  const cells = Array.from({ length: firstWeekday + daysInMonth }, (_, index) => index < firstWeekday ? null : index - firstWeekday + 1);
+  return (
+    <div className="paper-card p-3">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="micro">MINI CALENDAR</div>
+        <span className={`font-mono text-[9px] ${hasError ? 'text-[#d94170]' : 'text-[#5e8a42]'}`}>{hasError ? 'OFFLINE' : isLoading ? 'SYNCING...' : 'LIVE'}</span>
+      </div>
+      <p className="mb-2 text-center font-mono text-[10px] font-bold text-[#572b4d]">{monthLabel}</p>
+      <div className="grid grid-cols-7 gap-1 text-center font-mono text-[9px] text-[#572b4d]">
+        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => <span key={`${day}-${index}`} className="font-bold">{day}</span>)}
+        {cells.map((day, index) => {
+          const dateKey = day ? `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}` : '';
+          const hasEvent = dateKey ? eventDays.has(dateKey) : false;
+          return <span key={`${dateKey || 'empty'}-${index}`} className={`${day === today ? 'bg-[#ef4e77] text-white' : ''} ${hasEvent ? 'underline decoration-2 decoration-[#6b4ab5] underline-offset-2' : ''}`}>{day ?? ''}</span>;
+        })}
+      </div>
+      <p className="mt-3 border-t border-dotted border-[#d894a8] pt-2 font-mono text-[9px] text-[#70445b]">
+        {summary?.events.length ? `${summary.events.length} event${summary.events.length === 1 ? '' : 's'} this month` : isLoading ? 'checking your calendar...' : hasError ? 'calendar needs a reconnect' : 'no events this month'}
+      </p>
+    </div>
+  );
+}
+
+function HeroHome({ onOpen, calendarSummary, calendarLoading, calendarError, note, onCreateNote }: { onOpen: (id: SectionId) => void; calendarSummary?: CalendarSummary; calendarLoading: boolean; calendarError: boolean; note: MoodNote | null; onCreateNote: () => void }) {
   return (
     <section id="home" className="section-window">
       <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
@@ -158,18 +215,13 @@ function HeroHome({ onOpen }: { onOpen: (id: SectionId) => void }) {
         <aside className="space-y-4">
           <div className="paper-card p-3">
             <div className="micro mb-3">TODAY&apos;S MOOD</div>
-            <div className="border-2 border-[#572b4d] bg-[#ffea65] p-3 text-center shadow-[3px_3px_0_#572b4d]">
+            <button className="w-full border-2 border-[#572b4d] bg-[#ffea65] p-3 text-center shadow-[3px_3px_0_#572b4d] transition-transform hover:-translate-y-0.5" onClick={onCreateNote} data-testid="button-create-mood-note">
               <Sparkles className="mx-auto mb-2 text-[#ef3e71]" size={28} />
-              <p className="font-mono text-xs font-bold text-[#572b4d]">READY TO CREATE</p>
-            </div>
+              <p className="font-mono text-xs font-bold text-[#572b4d]">{note ? "EDIT TODAY'S NOTE" : 'READY TO CREATE'}</p>
+              <p className="mt-2 line-clamp-2 text-left text-[11px] leading-4 text-[#70445b]">{note?.text ?? 'click here to pin a note'}</p>
+            </button>
           </div>
-          <div className="paper-card p-3">
-            <div className="micro mb-2">MINI CALENDAR</div>
-            <div className="grid grid-cols-7 gap-1 text-center font-mono text-[9px] text-[#572b4d]">
-              {['S','M','T','W','T','F','S'].map((d, i) => <span key={`${d}-${i}`} className="font-bold">{d}</span>)}
-              {Array.from({ length: 21 }, (_, i) => <span key={i} className={i === 9 ? 'bg-[#ef4e77] text-white' : ''}>{i + 1}</span>)}
-            </div>
-          </div>
+          <MiniCalendar summary={calendarSummary} isLoading={calendarLoading} hasError={calendarError} />
           <div className="paper-card p-3">
             <div className="micro mb-2">QUICK LINKS</div>
             <button className="mb-2 w-full border-2 border-[#572b4d] bg-[#b9f269] p-2 text-left font-mono text-[10px]" onClick={() => onOpen('stage')} data-testid="button-quick-stage">WATCH THE STAGE</button>
@@ -359,6 +411,44 @@ function Homepage({ soundOn, onToggleSound }: { soundOn: boolean; onToggleSound:
   const [active, setActive] = useState<SectionId>('home');
   const [workModal, setWorkModal] = useState<string | null>(null);
   const [performance, setPerformance] = useState<Performance | null>(null);
+  const [noteWindowOpen, setNoteWindowOpen] = useState(false);
+  const [note, setNote] = useState<MoodNote | null>(() => {
+    try {
+      const stored = localStorage.getItem('mai-anh-mood-note');
+      return stored ? JSON.parse(stored) as MoodNote : null;
+    } catch {
+      return null;
+    }
+  });
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  const [calendarSummary, setCalendarSummary] = useState<CalendarSummary>();
+  const [calendarLoading, setCalendarLoading] = useState(true);
+  const [calendarError, setCalendarError] = useState(false);
+  useEffect(() => {
+    let active = true;
+    const loadCalendar = async () => {
+      setCalendarLoading(true);
+      try {
+        const response = await fetch(`/api/calendar/summary?timeZone=${encodeURIComponent(timeZone)}`);
+        if (!response.ok) throw new Error(`Calendar request failed: ${response.status}`);
+        const data = await response.json() as CalendarSummary;
+        if (active) {
+          setCalendarSummary(data);
+          setCalendarError(false);
+        }
+      } catch {
+        if (active) setCalendarError(true);
+      } finally {
+        if (active) setCalendarLoading(false);
+      }
+    };
+    void loadCalendar();
+    const interval = window.setInterval(loadCalendar, 60_000);
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
+  }, [timeZone]);
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
       const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
@@ -373,17 +463,23 @@ function Homepage({ soundOn, onToggleSound }: { soundOn: boolean; onToggleSound:
   }, []);
   const nav = useMemo(() => navItems, []);
   const openSection = (id: SectionId) => scrollToSection(id);
+  const saveMoodNote = (text: string) => {
+    const nextNote = { text, savedAt: new Date().toISOString() };
+    setNote(nextNote);
+    localStorage.setItem('mai-anh-mood-note', JSON.stringify(nextNote));
+  };
   return (
     <main className="world-wallpaper min-h-dvh pb-12 pt-3">
       <div className="retro-shell">
         <div className="browser-top flex flex-wrap items-center gap-2 px-3 py-2"><span className="font-bold">◉ MAI ANH&apos;S MINI HOMEPAGE</span><span className="hidden text-cyan-50/80 sm:inline">— personal internet room</span><span className="ml-auto flex gap-1"><i className="h-3 w-3 bg-[#ffec68]" /><i className="h-3 w-3 bg-[#a9f35b]" /><i className="h-3 w-3 bg-[#ff837e]" /></span></div>
          <div className="flex flex-wrap items-center gap-2 border-b-2 border-[#572b4d] bg-[#f8c3d3] p-2"><span className="browser-address min-w-[220px] flex-1 px-3 py-1">MINI HOMEPAGE / PERSONAL INTERNET ROOM</span><span className="micro text-[#572b4d]">STATUS: ONLINE</span><button className={`nav-chip ml-auto !px-2 !py-1 ${soundOn ? 'active' : ''}`} onClick={onToggleSound} data-testid="button-toggle-sound"><Music2 size={13} className="inline" /> {soundOn ? 'SOUND ON' : 'SOUND OFF'}</button></div>
         <nav className="flex gap-2 overflow-x-auto border-b-3 border-[#572b4d] bg-[#fff0d6] p-2" aria-label="Homepage navigation">{nav.map((item) => <button key={item.id} className={`nav-chip shrink-0 ${active === item.id ? 'active' : ''}`} onClick={() => openSection(item.id)} data-testid={`button-nav-${item.id}`}>{item.label}</button>)}</nav>
-        <div className="space-y-7 p-3 sm:p-5"><HeroHome onOpen={openSection} /><ProfileSection /><WorkSection onOpen={setWorkModal} /><StageSection onVideo={setPerformance} /><AchievementsSection /><DiarySection /><GuestbookSection /><ContactSection /></div>
+         <div className="space-y-7 p-3 sm:p-5"><HeroHome onOpen={openSection} calendarSummary={calendarSummary} calendarLoading={calendarLoading} calendarError={calendarError} note={note} onCreateNote={() => setNoteWindowOpen(true)} /><ProfileSection /><WorkSection onOpen={setWorkModal} /><StageSection onVideo={setPerformance} /><AchievementsSection /><DiarySection /><GuestbookSection /><ContactSection /></div>
         <footer className="border-t-3 border-[#572b4d] bg-[#7c49a4] px-4 py-5 text-center font-mono text-[10px] text-[#fff8e9]">END OF PAGE / THANK YOU FOR VISITING / <button className="underline" onClick={() => scrollToSection('home')} data-testid="button-back-top">BACK TO TOP</button></footer>
       </div>
       {workModal && <WorkModal id={workModal} onClose={() => setWorkModal(null)} />}
       {performance && <PerformanceModal item={performance} onClose={() => setPerformance(null)} />}
+      {noteWindowOpen && <MoodNoteWindow initialNote={note} onClose={() => setNoteWindowOpen(false)} onSave={saveMoodNote} />}
     </main>
   );
 }

@@ -1,0 +1,1 @@
+- [Generated API hook quirk](api-client-hook-quirk.md) — simple homepage reads may need local fetch when generated hooks trigger runtime hook errors.

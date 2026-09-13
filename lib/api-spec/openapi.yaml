@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: calendar
+    description: Google Calendar operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,32 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /calendar/summary:
+    get:
+      operationId: getCalendarSummary
+      tags: [calendar]
+      summary: Get the current calendar month
+      description: Returns the current date and upcoming events from the connected primary Google Calendar.
+      parameters:
+        - name: timeZone
+          in: query
+          required: false
+          schema:
+            type: string
+          description: IANA timezone used for the month window and date labels.
+      responses:
+        "200":
+          description: Current calendar summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CalendarSummary"
+        "502":
+          description: Calendar provider unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +61,51 @@ components:
           type: string
       required:
         - status
+    CalendarEvent:
+      type: object
+      properties:
+        id:
+          type: string
+        summary:
+          type: string
+        start:
+          type: string
+        end:
+          type: string
+        allDay:
+          type: boolean
+        htmlLink:
+          type: ["string", "null"]
+      required:
+        - id
+        - summary
+        - start
+        - end
+        - allDay
+        - htmlLink
+    CalendarSummary:
+      type: object
+      properties:
+        currentDate:
+          type: string
+        month:
+          type: string
+        timeZone:
+          type: string
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/CalendarEvent"
+      required:
+        - currentDate
+        - month
+        - timeZone
+        - events
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
 
