@@ -3,6 +3,7 @@ import { ExternalLink, Heart, Music2, Play, Sparkles, X } from 'lucide-react';
 import type { CalendarSummary } from '@workspace/api-client-react';
 import profilePhoto from '@assets/Profile_Photo_1789185793051.jpg';
 import bgmAudio from '@assets/Supernatural_(Instrumental)_1789186548920.mp3';
+import { MiniPhotoBoothBanner, MiniPhotoBoothModal } from './components/MiniPhotoBooth/MiniPhotoBooth';
 
 type SectionId = 'home' | 'profile' | 'work' | 'stage' | 'achievements' | 'diary' | 'guestbook' | 'contact';
 type Performance = { id: string; title: string; year: string; detail: string; url: string; color: string };
@@ -202,7 +203,7 @@ function MiniCalendar({ summary, isLoading, hasError }: { summary?: CalendarSumm
   );
 }
 
-function HeroHome({ onOpen, calendarSummary, calendarLoading, calendarError, note, onCreateNote }: { onOpen: (id: SectionId) => void; calendarSummary?: CalendarSummary; calendarLoading: boolean; calendarError: boolean; note: MoodNote | null; onCreateNote: () => void }) {
+function HeroHome({ onOpen, onOpenPhotoBooth, calendarSummary, calendarLoading, calendarError, note, onCreateNote }: { onOpen: (id: SectionId) => void; onOpenPhotoBooth?: () => void; calendarSummary?: CalendarSummary; calendarLoading: boolean; calendarError: boolean; note: MoodNote | null; onCreateNote: () => void }) {
   return (
     <section id="home" className="section-window">
       <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
@@ -225,7 +226,12 @@ function HeroHome({ onOpen, calendarSummary, calendarLoading, calendarError, not
           <div className="paper-card p-3">
             <div className="micro mb-2">QUICK LINKS</div>
             <button className="mb-2 w-full border-2 border-[#572b4d] bg-[#b9f269] p-2 text-left font-mono text-[10px]" onClick={() => onOpen('stage')} data-testid="button-quick-stage">WATCH THE STAGE</button>
-            <button className="w-full border-2 border-[#572b4d] bg-[#ff9dbb] p-2 text-left font-mono text-[10px]" onClick={() => onOpen('guestbook')} data-testid="button-quick-guestbook">SIGN THE GUESTBOOK</button>
+            <button className="mb-2 w-full border-2 border-[#572b4d] bg-[#ff9dbb] p-2 text-left font-mono text-[10px]" onClick={() => onOpen('guestbook')} data-testid="button-quick-guestbook">SIGN THE GUESTBOOK</button>
+            {onOpenPhotoBooth && (
+              <button className="w-full border-2 border-[#572b4d] bg-[#ffea65] p-2 text-left font-mono text-[10px] font-bold text-[#d94170] hover:bg-[#ffcedb] transition-colors" onClick={onOpenPhotoBooth} data-testid="button-quick-photobooth">
+                ♡ MINI PHOTO BOOTH 📸
+              </button>
+            )}
           </div>
         </aside>
       </div>
@@ -407,11 +413,12 @@ function PerformanceModal({ item, onClose }: { item: Performance; onClose: () =>
   return <div className="modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}><div className="modal-window"><WindowBar title="MY STAGE / VIDEO PLAYER" onClose={onClose} /><div className="p-4 sm:p-6"><div className="aspect-video border-3 border-[#572b4d] bg-[#211833]"><iframe className="h-full w-full" src={`https://www.youtube-nocookie.com/embed/${id}`} title={item.title} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /></div><p className="micro mt-5 text-[#df3b70]">{item.year}</p><h2 className="mt-1 text-xl font-black text-[#572b4d]">{item.title}</h2><p className="mt-2 text-sm text-[#70445b]">{item.detail}</p><div className="mt-5 flex flex-wrap gap-3"><a href={item.url} target="_blank" rel="noreferrer" className="glossy-button inline-flex items-center gap-2" data-testid="link-watch-youtube">WATCH ON YOUTUBE <ExternalLink size={14} /></a><button className="nav-chip" onClick={onClose} data-testid="button-close-video">CLOSE WINDOW</button></div></div></div></div>;
 }
 
-function Homepage({ soundOn, onToggleSound }: { soundOn: boolean; onToggleSound: () => void }) {
+function Homepage({ soundOn, onToggleSound, onResumeMusic }: { soundOn: boolean; onToggleSound: () => void; onResumeMusic?: () => void }) {
   const [active, setActive] = useState<SectionId>('home');
   const [workModal, setWorkModal] = useState<string | null>(null);
   const [performance, setPerformance] = useState<Performance | null>(null);
   const [noteWindowOpen, setNoteWindowOpen] = useState(false);
+  const [photoBoothOpen, setPhotoBoothOpen] = useState(false);
   const [note, setNote] = useState<MoodNote | null>(() => {
     try {
       const stored = localStorage.getItem('mai-anh-mood-note');
@@ -458,9 +465,17 @@ function Homepage({ soundOn, onToggleSound }: { soundOn: boolean; onToggleSound:
     return () => observer.disconnect();
   }, []);
   useEffect(() => {
-    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') { setPerformance(null); setWorkModal(null); } };
-    window.addEventListener('keydown', onKey); return () => window.removeEventListener('keydown', onKey);
-  }, []);
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setPerformance(null);
+        setWorkModal(null);
+        setPhotoBoothOpen(false);
+        onResumeMusic?.();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onResumeMusic]);
   const nav = useMemo(() => navItems, []);
   const openSection = (id: SectionId) => scrollToSection(id);
   const saveMoodNote = (text: string) => {
@@ -468,18 +483,37 @@ function Homepage({ soundOn, onToggleSound }: { soundOn: boolean; onToggleSound:
     setNote(nextNote);
     localStorage.setItem('mai-anh-mood-note', JSON.stringify(nextNote));
   };
+  const handleCloseBooth = () => {
+    setPhotoBoothOpen(false);
+    onResumeMusic?.();
+  };
+  const handleClosePerformance = () => {
+    setPerformance(null);
+    onResumeMusic?.();
+  };
   return (
     <main className="world-wallpaper min-h-dvh pb-12 pt-3">
       <div className="retro-shell">
         <div className="browser-top flex flex-wrap items-center gap-2 px-3 py-2"><span className="font-bold">◉ MAI ANH&apos;S MINI HOMEPAGE</span><span className="hidden text-cyan-50/80 sm:inline">— personal internet room</span><span className="ml-auto flex gap-1"><i className="h-3 w-3 bg-[#ffec68]" /><i className="h-3 w-3 bg-[#a9f35b]" /><i className="h-3 w-3 bg-[#ff837e]" /></span></div>
          <div className="flex flex-wrap items-center gap-2 border-b-2 border-[#572b4d] bg-[#f8c3d3] p-2"><span className="browser-address min-w-[220px] flex-1 px-3 py-1">MINI HOMEPAGE / PERSONAL INTERNET ROOM</span><span className="micro text-[#572b4d]">STATUS: ONLINE</span><button className={`nav-chip ml-auto !px-2 !py-1 ${soundOn ? 'active' : ''}`} onClick={onToggleSound} data-testid="button-toggle-sound"><Music2 size={13} className="inline" /> {soundOn ? 'SOUND ON' : 'SOUND OFF'}</button></div>
         <nav className="flex gap-2 overflow-x-auto border-b-3 border-[#572b4d] bg-[#fff0d6] p-2" aria-label="Homepage navigation">{nav.map((item) => <button key={item.id} className={`nav-chip shrink-0 ${active === item.id ? 'active' : ''}`} onClick={() => openSection(item.id)} data-testid={`button-nav-${item.id}`}>{item.label}</button>)}</nav>
-         <div className="space-y-7 p-3 sm:p-5"><HeroHome onOpen={openSection} calendarSummary={calendarSummary} calendarLoading={calendarLoading} calendarError={calendarError} note={note} onCreateNote={() => setNoteWindowOpen(true)} /><ProfileSection /><WorkSection onOpen={setWorkModal} /><StageSection onVideo={setPerformance} /><AchievementsSection /><DiarySection /><GuestbookSection /><ContactSection /></div>
+         <div className="space-y-7 p-3 sm:p-5">
+           <HeroHome onOpen={openSection} onOpenPhotoBooth={() => setPhotoBoothOpen(true)} calendarSummary={calendarSummary} calendarLoading={calendarLoading} calendarError={calendarError} note={note} onCreateNote={() => setNoteWindowOpen(true)} />
+           <ProfileSection />
+           <MiniPhotoBoothBanner onOpen={() => setPhotoBoothOpen(true)} />
+           <WorkSection onOpen={setWorkModal} />
+           <StageSection onVideo={setPerformance} />
+           <AchievementsSection />
+           <DiarySection />
+           <GuestbookSection />
+           <ContactSection />
+         </div>
         <footer className="border-t-3 border-[#572b4d] bg-[#7c49a4] px-4 py-5 text-center font-mono text-[10px] text-[#fff8e9]">END OF PAGE / THANK YOU FOR VISITING / <button className="underline" onClick={() => scrollToSection('home')} data-testid="button-back-top">BACK TO TOP</button></footer>
       </div>
       {workModal && <WorkModal id={workModal} onClose={() => setWorkModal(null)} />}
-      {performance && <PerformanceModal item={performance} onClose={() => setPerformance(null)} />}
+      {performance && <PerformanceModal item={performance} onClose={handleClosePerformance} />}
       {noteWindowOpen && <MoodNoteWindow initialNote={note} onClose={() => setNoteWindowOpen(false)} onSave={saveMoodNote} />}
+      <MiniPhotoBoothModal isOpen={photoBoothOpen} onClose={handleCloseBooth} onStreamClose={onResumeMusic} />
     </main>
   );
 }
@@ -493,18 +527,69 @@ function App() {
     const audio = new Audio(bgmAudio);
     audio.loop = true;
     audio.volume = 0.35;
+
+    // Bulletproof loop listener so music never stops at the end of track
+    const handleEnded = () => {
+      if (audioRef.current && soundOn) {
+        audio.currentTime = 0;
+        void audio.play().catch(() => {});
+      }
+    };
+    audio.addEventListener('ended', handleEnded);
+
     audioRef.current = audio;
+
     return () => {
+      audio.removeEventListener('ended', handleEnded);
       audio.pause();
       audio.src = '';
       audioRef.current = null;
     };
-  }, []);
+  }, [soundOn]);
+
+  // Keep audio playing on user interactions if soundOn is enabled
+  useEffect(() => {
+    if (!entered || !soundOn) return;
+
+    const resumeIfPaused = () => {
+      const audio = audioRef.current;
+      if (audio && audio.paused && soundOn) {
+        void audio.play().catch(() => {});
+      }
+    };
+
+    // Auto-resume on tab focus
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && soundOn) {
+        resumeIfPaused();
+      }
+    };
+
+    window.addEventListener('click', resumeIfPaused);
+    window.addEventListener('touchstart', resumeIfPaused);
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      window.removeEventListener('click', resumeIfPaused);
+      window.removeEventListener('touchstart', resumeIfPaused);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [entered, soundOn]);
 
   const startMusic = () => {
     const audio = audioRef.current;
     if (!audio) return;
-    void audio.play().catch(() => setSoundOn(false));
+    setSoundOn(true);
+    void audio.play().catch(() => {
+      // Don't turn soundOn to false; keep user intent enabled, click listeners will start it on first touch
+    });
+  };
+
+  const resumeMusic = () => {
+    const audio = audioRef.current;
+    if (audio && soundOn && audio.paused) {
+      void audio.play().catch(() => {});
+    }
   };
 
   const toggleSound = () => {
@@ -513,14 +598,15 @@ function App() {
     const audio = audioRef.current;
     if (!audio) return;
     if (nextValue) {
-      void audio.play().catch(() => setSoundOn(false));
+      audio.currentTime = audio.currentTime || 0;
+      void audio.play().catch(() => {});
     } else {
       audio.pause();
     }
   };
 
   return entered
-    ? <Homepage soundOn={soundOn} onToggleSound={toggleSound} />
+    ? <Homepage soundOn={soundOn} onToggleSound={toggleSound} onResumeMusic={resumeMusic} />
     : <IntroScreen onStartMusic={startMusic} onEnter={() => setEntered(true)} />;
 }
 

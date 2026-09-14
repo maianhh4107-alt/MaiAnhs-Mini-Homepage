@@ -1,0 +1,223 @@
+/* Cyworld Mini Photo Booth retro styling */
+
+.booth-banner {
+  background: linear-gradient(135deg, #fff0f5 0%, #ffe4ec 45%, #e0f7fa 100%);
+  border: 3px solid #572b4d;
+  box-shadow: 6px 6px 0 #572b4d;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.booth-banner:hover {
+  transform: translateY(-2px);
+  box-shadow: 8px 8px 0 #d94170;
+}
+
+.booth-banner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: 
+    radial-gradient(#f06292 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.4) 50%, transparent 50%);
+  background-size: 14px 14px, 28px 28px;
+  pointer-events: none;
+  opacity: 0.35;
+}
+
+.booth-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgba(43, 18, 38, 0.75);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  overflow-y: auto;
+}
+
+.booth-modal-box {
+  width: min(860px, 100%);
+  max-height: calc(100dvh - 24px);
+  display: flex;
+  flex-direction: column;
+  background: #fff8ef;
+  border: 4px solid #572b4d;
+  box-shadow: 10px 10px 0 #d94170, 0 20px 40px rgba(0, 0, 0, 0.3);
+  animation: boothPop 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  overflow: hidden;
+}
+
+@keyframes boothPop {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.camera-lens-glare {
+  background: linear-gradient(135deg, rgba(255,255,255,0.75) 0%, rgba(255,255,255,0) 60%);
+}
+
+.shutter-flash {
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  pointer-events: none;
+  z-index: 50;
+  animation: flashFade 0.35s ease-out forwards;
+}
+
+@keyframes flashFade {
+  0% { opacity: 0.95; }
+  100% { opacity: 0; }
+}
+
+.countdown-pulse {
+  animation: countPulse 0.9s cubic-bezier(0.2, 0.9, 0.3, 1) infinite;
+}
+
+@keyframes countPulse {
+  0% { transform: scale(0.7); opacity: 0; }
+  40% { transform: scale(1.15); opacity: 1; }
+  70% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.05); opacity: 0.9; }
+}
+
+.photo-strip-preview {
+  box-shadow: 4px 5px 0 #572b4d, 0 8px 20px rgba(87, 43, 77, 0.15);
+  transition: transform 0.2s ease;
+}
+
+.photo-strip-preview:hover {
+  transform: rotate(-0.5deg) scale(1.01);
+}
+
+.sparkle-float {
+  animation: sparkleBob 2.4s ease-in-out infinite alternate;
+}
+
+@keyframes sparkleBob {
+  0% { transform: translateY(0) rotate(0deg); }
+  100% { transform: translateY(-5px) rotate(8deg); }
+}
+
+.sticker-btn {
+  border: 2px solid #572b4d;
+  background: #ffffff;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.sticker-btn:hover {
+  transform: translateY(-2px) scale(1.08);
+  box-shadow: 2px 2px 0 #572b4d;
+}
+
+.sticker-btn.selected {
+  background: #ffea65;
+  border-color: #572b4d;
+  box-shadow: 3px 3px 0 #ef4e77;
+  transform: translateY(-2px) scale(1.08);
+}
+
+.frame-swatch {
+  width: 32px;
+  height: 32px;
+  border: 2px solid #572b4d;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.frame-swatch:hover {
+  transform: scale(1.1);
+}
+
+.frame-swatch.selected {
+  outline: 3px solid #ef4e77;
+  outline-offset: 2px;
+  transform: scale(1.12);
+}
+
+.strip-interactive-canvas {
+  position: relative;
+  user-select: none;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.draggable-sticker {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  transition: transform 0.05s linear;
+}
+
+.draggable-sticker:active {
+  cursor: grabbing;
+}
+
+.draggable-sticker.is-selected {
+  outline: 2px dashed #572b4d;
+  outline-offset: 3px;
+  background: rgba(255, 234, 101, 0.35);
+  border-radius: 4px;
+}
+
+.sticker-mini-bubble {
+  position: absolute;
+  top: -24px;
+  right: -24px;
+  display: flex;
+  gap: 2px;
+  z-index: 30;
+  background: #572b4d;
+  padding: 2px 4px;
+  border-radius: 4px;
+  box-shadow: 2px 2px 0 #ef4e77;
+}
+
+.sticker-mini-bubble button {
+  background: #ffea65;
+  border: 1px solid #572b4d;
+  color: #572b4d;
+  font-family: var(--app-font-mono);
+  font-size: 9px;
+  font-weight: bold;
+  padding: 1px 4px;
+  line-height: 1.1;
+  cursor: pointer;
+}
+
+.sticker-mini-bubble button:hover {
+  background: #ff9dbb;
+}
+
+.crt-scanlines {
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%, 
+    rgba(0, 0, 0, 0.12) 50%
+  ), linear-gradient(
+    90deg,
+    rgba(255, 0, 0, 0.03),
+    rgba(0, 255, 0, 0.01),
+    rgba(0, 0, 255, 0.03)
+  );
+  background-size: 100% 3px, 6px 100%;
+  pointer-events: none;
+}

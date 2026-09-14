@@ -1,7 +1,9 @@
 {
   "name": "Mai Anh's Mini Homepage",
   "description": "An interactive personal portfolio for Nguyen Mai Anh, presented as a colorful early-2000s Korean internet homepage with a mini room, profile, work archive, performance stage, diary, and guestbook.",
-  "requestFramePermissions": [],
+  "requestFramePermissions": [
+    "camera"
+  ],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
   ]
