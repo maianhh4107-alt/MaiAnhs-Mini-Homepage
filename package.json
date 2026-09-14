@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "dev": "npm run dev --workspace=@workspace/mai-anh-homepage",
-    "build": "npm run build --workspace=@workspace/mai-anh-homepage && mkdir -p dist && cp -r artifacts/mai-anh-homepage/dist/* dist/ 2>/dev/null || true",
+    "build": "npm run build --workspace=@workspace/mai-anh-homepage && node scripts/sync-build.cjs",
     "typecheck:libs": "tsc --build",
     "typecheck": "npm run typecheck:libs && npm run typecheck --workspace=@workspace/mai-anh-homepage",
     "lint": "npm run typecheck"
