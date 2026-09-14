@@ -124,7 +124,7 @@ function ProfileCard({ onProfile }: { onProfile: () => void }) {
   );
 }
 
-function MiniRoom({ onOpen }: { onOpen: (id: SectionId) => void }) {
+function MiniRoom({ onOpen, onOpenPhotoBooth }: { onOpen: (id: SectionId) => void; onOpenPhotoBooth?: () => void }) {
   return (
     <div className="room" data-testid="panel-mini-room">
       <span className="sticker yellow absolute right-4 top-10 z-10">CLICK OBJECTS</span>
@@ -142,6 +142,24 @@ function MiniRoom({ onOpen }: { onOpen: (id: SectionId) => void }) {
       <button className="room-object cd" onClick={() => onOpen('diary')} aria-label="Open diary" data-testid="button-room-cd" />
       <button className="room-object plant" onClick={() => onOpen('guestbook')} aria-label="Open guestbook" data-testid="button-room-plant">✦</button>
       <div className="room-object desk" />
+      {onOpenPhotoBooth && (
+        <button
+          type="button"
+          onClick={onOpenPhotoBooth}
+          className="sticker absolute left-[46%] top-[14%] z-20 -translate-x-1/2 cursor-pointer bg-[#ff4b82] text-white shadow-[3px_3px_0_#572b4d] hover:bg-[#ff2b6d] hover:scale-105 hover:-rotate-3 hover:shadow-[5px_5px_0_#572b4d] active:scale-95 transition-all text-center group"
+          data-testid="button-room-photobooth"
+          aria-label="Enter Mini Photo Booth"
+          title="Enter Mini Photo Booth!"
+        >
+          <div className="flex items-center gap-1.5 font-mono text-[10px] font-black tracking-tight whitespace-nowrap">
+            <span className="text-sm transition-transform group-hover:scale-125 inline-block">📸</span>
+            <span>PHOTO BOOTH</span>
+            <span className="bg-[#ffea65] text-[#572b4d] px-1 py-0.5 rounded-[2px] text-[8px] font-extrabold ml-0.5 shadow-[1px_1px_0_#572b4d]">
+              ENTER ♡
+            </span>
+          </div>
+        </button>
+      )}
       <span className="sticker pink absolute bottom-[35%] right-[7%] z-10">NOTE BOARD</span>
       <span className="sticker lime absolute bottom-[8%] left-[7%] z-10">WELCOME</span>
     </div>
@@ -212,7 +230,7 @@ function HeroHome({ onOpen, onOpenPhotoBooth, calendarSummary, calendarLoading, 
       </div>
       <div className="grid gap-4 lg:grid-cols-[190px_1fr_190px]">
         <ProfileCard onProfile={() => onOpen('profile')} />
-        <MiniRoom onOpen={onOpen} />
+        <MiniRoom onOpen={onOpen} onOpenPhotoBooth={onOpenPhotoBooth} />
         <aside className="space-y-4">
           <div className="paper-card p-3">
             <div className="micro mb-3">TODAY&apos;S MOOD</div>
